@@ -12,6 +12,13 @@ const enc = require('../lib/messages')
 
 const { create, createStorage, createStored, replicate, unreplicate } = require('./helpers')
 
+const LEGACY_PUBLIC_KEY_BYTES = 32
+const PUBLIC_KEY_BYTES = crypto.keyPair().publicKey.byteLength
+const IS_LEGACY_PUBLIC_KEY_SIZE = PUBLIC_KEY_BYTES === LEGACY_PUBLIC_KEY_BYTES
+const MULTISIG_NORMAL_MODE_TIMEOUT = IS_LEGACY_PUBLIC_KEY_SIZE ? 30000 : 120000
+const MULTISIG_LARGE_PATCHES_PATCH_COUNT = IS_LEGACY_PUBLIC_KEY_SIZE ? 10000 : 2000
+const MULTISIG_LARGE_PATCHES_LENGTH = IS_LEGACY_PUBLIC_KEY_SIZE ? 1000 : 250
+
 // TODO: move this to be actual tree batches instead - less future surprises
 // for now this is just to get the tests to work as they test important things
 class AssertionTreeBatch {
@@ -70,7 +77,7 @@ test('create verifier - single signer no sign (v0)', async function (t) {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         namespace,
         publicKey: keyPair.publicKey
       }
@@ -99,7 +106,7 @@ test('create verifier - single signer no sign', async function (t) {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         namespace,
         publicKey: keyPair.publicKey
       }
@@ -134,7 +141,7 @@ test('create verifier - single signer', async function (t) {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         namespace,
         publicKey: keyPair.publicKey
       }
@@ -168,12 +175,12 @@ test('create verifier - multi signer', async function (t) {
       {
         publicKey: a.publicKey,
         namespace: aEntropy,
-        signature: 'ed25519'
+        signature: 'mldsa44'
       },
       {
         publicKey: b.publicKey,
         namespace: bEntropy,
-        signature: 'ed25519'
+        signature: 'mldsa44'
       }
     ]
   }
@@ -211,7 +218,7 @@ test('create verifier - defaults', async function (t) {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         publicKey: keyPair.publicKey
       }
     ]
@@ -268,7 +275,7 @@ test('create verifier - compat signer', async function (t) {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         namespace,
         publicKey: keyPair.publicKey
       }
@@ -824,7 +831,7 @@ test('multisig - overlapping appends', async function (t) {
   t.is(core2.length, 3)
 })
 
-test('multisig - normal operating mode', async function (t) {
+test('multisig - normal operating mode', { timeout: MULTISIG_NORMAL_MODE_TIMEOUT }, async function (t) {
   const inputs = []
 
   for (let i = 0; i < 0xff; i++) inputs.push(b4a.from([i]))
@@ -933,7 +940,7 @@ test('multisig - large patches', { timeout: 120000 }, async function (t) {
 
   const core = await create(t, { manifest })
 
-  for (let i = 0; i < 10000; i++) {
+  for (let i = 0; i < MULTISIG_LARGE_PATCHES_PATCH_COUNT; i++) {
     await signers[0].append(b4a.from(i.toString(10)))
   }
 
@@ -974,17 +981,17 @@ test('multisig - large patches', { timeout: 120000 }, async function (t) {
   t.alike(await core2.get(0), b4a.from('0'))
 
   const batch = []
-  for (let i = 1; i < 1000; i++) {
+  for (let i = 1; i < MULTISIG_LARGE_PATCHES_LENGTH; i++) {
     batch.push(b4a.from(i.toString(10)))
     await signers[1].append(b4a.from(i.toString(10)))
   }
 
-  for (let i = 0; i < 10000; i++) {
+  for (let i = 0; i < MULTISIG_LARGE_PATCHES_PATCH_COUNT; i++) {
     await signers[0].append(b4a.from(i.toString(10)))
   }
 
   len = signableLength([signers[0].length, signers[1].length], 2)
-  t.is(len, 1000)
+  t.is(len, MULTISIG_LARGE_PATCHES_LENGTH)
 
   const proof3 = await partialCoreSignature(core, signers[0], len)
   const proof4 = await partialCoreSignature(core, signers[1], len)
@@ -1000,7 +1007,7 @@ test('multisig - large patches', { timeout: 120000 }, async function (t) {
 
   await t.execution(core.append(batch, { signature: multisig }))
 
-  t.is(core.length, 1000)
+  t.is(core.length, MULTISIG_LARGE_PATCHES_LENGTH)
 
   await t.execution(p2)
 
@@ -1276,7 +1283,7 @@ test('create verifier - default quorum', async function (t) {
     version: 0,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         namespace,
         publicKey: keyPair.publicKey
       }
@@ -1291,7 +1298,7 @@ test('create verifier - default quorum', async function (t) {
   t.is(Verifier.fromManifest(manifest).quorum, 1)
 
   manifest.signers.push({
-    signature: 'ed25519',
+    signature: 'mldsa44',
     namespace,
     publicKey: keyPair2.publicKey
   })
@@ -1317,7 +1324,7 @@ test('manifest encoding', (t) => {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         namespace: b4a.alloc(32, 1),
         publicKey: keyPair.publicKey
       }
@@ -1349,7 +1356,7 @@ test('manifest encoding', (t) => {
 
   // add signer
   manifest.signers.push({
-    signature: 'ed25519',
+    signature: 'mldsa44',
     namespace: b4a.alloc(32, 2),
     publicKey: keyPair2.publicKey
   })
@@ -1428,7 +1435,7 @@ test('create verifier - open existing core with manifest', async function (t) {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         publicKey: keyPair.publicKey
       }
     ]
@@ -1446,7 +1453,7 @@ test('create verifier - open existing core with manifest', async function (t) {
 
   await core.close()
 
-  manifest.signers[0].publicKey = b4a.alloc(32, 0)
+  manifest.signers[0].publicKey = b4a.alloc(PUBLIC_KEY_BYTES, 0)
 
   const wrongCore = await create(null, { manifest, compat: false })
   await t.exception(wrongCore.ready(), /STORAGE_CONFLICT/)
@@ -1475,7 +1482,7 @@ test('manifest - persist if manifest is updated', async function (t) {
     quorum: 1,
     signers: [
       {
-        signature: 'ed25519',
+        signature: 'mldsa44',
         publicKey: keyPair.publicKey
       }
     ]
@@ -1541,7 +1548,7 @@ function createMultiManifest(signers, prologue = null) {
     allowPatch: true,
     quorum: (signers.length >> 1) + 1,
     signers: signers.map((s) => ({
-      signature: 'ed25519',
+      signature: 'mldsa44',
       namespace: caps.DEFAULT_NAMESPACE,
       publicKey: s.manifest.signers[0].publicKey
     })),

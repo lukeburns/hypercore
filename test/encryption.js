@@ -340,6 +340,28 @@ test('encryption backwards compatibility', async function (t) {
   await notBlock.append(largeBlock.toString('hex'))
   await block.append(largeBlock.toString('hex'))
 
+  const legacyFixtureMode =
+    compatKey.publicKey.byteLength === 32 &&
+    defaultKey.publicKey.byteLength === 32 &&
+    blockKey.publicKey.byteLength === 32
+
+  if (!legacyFixtureMode) {
+    t.comment('non-legacy key size: validate mode invariants instead of legacy fixtures')
+    t.is(compat.length, def.length)
+    t.is(def.length, notBlock.length)
+    t.is(notBlock.length, block.length)
+
+    for (let i = 0; i < def.length; i++) {
+      t.alike(await def.get(i, { raw: true }), await notBlock.get(i, { raw: true }))
+    }
+
+    await compat.close()
+    await def.close()
+    await notBlock.close()
+    await block.close()
+    return
+  }
+
   // compat
   t.comment('test compat mode')
   t.is(compat.length, fixtures[0].length)

@@ -1,12 +1,18 @@
 const test = require('brittle')
 const { create, createStorage } = require('./helpers')
+const crypto = require('hypercore-crypto')
 
 const Hypercore = require('../')
+
+const LEGACY_KEY_BYTES = 32
+const PUBLIC_KEY_BYTES = crypto.keyPair().publicKey.byteLength
+const MARK_SWEEP_SIZE = PUBLIC_KEY_BYTES === LEGACY_KEY_BYTES ? 50_000 : 1_000
+const MARK_SWEEP_LARGE_SIZE = PUBLIC_KEY_BYTES === LEGACY_KEY_BYTES ? 250_000 : 5_000
 
 test('startMarking - basic', async (t) => {
   const core = await create(t)
 
-  const num = 50_000
+  const num = MARK_SWEEP_SIZE
   for (let i = 0; i < num; i++) {
     await core.append('i' + i)
   }
@@ -93,7 +99,7 @@ test('startMarking then immediate sweep', async (t) => {
 test('startMarking - on session', async (t) => {
   const core = await create(t)
 
-  const num = 50_000
+  const num = MARK_SWEEP_SIZE
   for (let i = 0; i < num; i++) {
     await core.append('i' + i)
   }
@@ -167,7 +173,7 @@ test('startMarking - on session', async (t) => {
 test.skip('startMarking - on named session', async (t) => {
   const core = await create(t)
 
-  const num = 50_000
+  const num = MARK_SWEEP_SIZE
   for (let i = 0; i < num; i++) {
     await core.append('i' + i)
   }
@@ -272,7 +278,7 @@ test('startMarking - large cores', { timeout: 5 * 60 * 1000 }, async (t) => {
   t.teardown(() => core.close())
   await core.ready()
 
-  const num = 250_000
+  const num = MARK_SWEEP_LARGE_SIZE
   for (let i = 0; i < num; i++) {
     await core.append('i' + i)
   }

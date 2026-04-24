@@ -156,9 +156,17 @@ test('core - user data', async function (t) {
 test('core - header does not retain slabs', async function (t) {
   const { core, reopen } = await create(t)
 
-  t.is(core.header.key.buffer.byteLength, 32, 'unslabbed key')
-  t.is(core.header.keyPair.publicKey.buffer.byteLength, 32, 'unslabbed public key')
-  t.is(core.header.keyPair.secretKey.buffer.byteLength, 64, 'unslabbed private key')
+  t.is(core.header.key.buffer.byteLength, core.header.key.byteLength, 'unslabbed key')
+  t.is(
+    core.header.keyPair.publicKey.buffer.byteLength,
+    core.header.keyPair.publicKey.byteLength,
+    'unslabbed public key'
+  )
+  t.is(
+    core.header.keyPair.secretKey.buffer.byteLength,
+    core.header.keyPair.secretKey.byteLength,
+    'unslabbed private key'
+  )
   t.is(
     core.header.manifest.signers[0].namespace.buffer.byteLength,
     32,
@@ -166,16 +174,28 @@ test('core - header does not retain slabs', async function (t) {
   )
   t.is(
     core.header.manifest.signers[0].publicKey.buffer.byteLength,
-    32,
+    core.header.manifest.signers[0].publicKey.byteLength,
     'unslabbed signers publicKey'
   )
 
   // check the different code path when re-opening
   const coreReopen = await reopen()
 
-  t.is(coreReopen.header.key.buffer.byteLength, 32, 'reopen unslabbed key')
-  t.is(coreReopen.header.keyPair.publicKey.buffer.byteLength, 32, 'reopen unslabbed public key')
-  t.is(coreReopen.header.keyPair.secretKey.buffer.byteLength, 64, 'reopen unslabbed secret key')
+  t.is(
+    coreReopen.header.key.buffer.byteLength,
+    coreReopen.header.key.byteLength,
+    'reopen unslabbed key'
+  )
+  t.is(
+    coreReopen.header.keyPair.publicKey.buffer.byteLength,
+    coreReopen.header.keyPair.publicKey.byteLength,
+    'reopen unslabbed public key'
+  )
+  t.is(
+    coreReopen.header.keyPair.secretKey.buffer.byteLength,
+    coreReopen.header.keyPair.secretKey.byteLength,
+    'reopen unslabbed secret key'
+  )
   t.is(
     coreReopen.header.manifest.signers[0].namespace.buffer.byteLength,
     32,
@@ -183,7 +203,7 @@ test('core - header does not retain slabs', async function (t) {
   )
   t.is(
     coreReopen.header.manifest.signers[0].publicKey.buffer.byteLength,
-    32,
+    coreReopen.header.manifest.signers[0].publicKey.byteLength,
     'reopen unslabbed signers publicKey'
   )
 

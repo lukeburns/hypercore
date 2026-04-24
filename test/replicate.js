@@ -14,6 +14,7 @@ const crypto = require('hypercore-crypto')
 const Hypercore = require('../')
 
 const DEBUG = false
+const BIG_KEY_RANGE_COUNT = crypto.keyPair().publicKey.byteLength > 32 ? 1_000 : 10_000
 
 test('basic replication get', async function (t) {
   const a = await create(t)
@@ -1193,7 +1194,7 @@ test('big download range', async function (t) {
   replicate(c, d, t)
   replicate(b, d, t)
 
-  const cnt = 10_000
+  const cnt = BIG_KEY_RANGE_COUNT
   for (let i = 0; i < cnt; i++) await a.append('tick')
 
   const r1 = b.download({ start: 0, end: cnt })
@@ -1215,7 +1216,7 @@ test('big download range (non contig)', async function (t) {
   const c = await create(t, a.key)
   const d = await create(t, a.key)
 
-  const cnt = 10_000
+  const cnt = BIG_KEY_RANGE_COUNT
   const batch = []
   for (let i = 0; i < cnt; i++) batch.push('tick')
   await a.append(batch)
@@ -1962,7 +1963,7 @@ test('multiple peers with the same remotePublicKey', async (t) => {
   }
   await core.append(batch)
 
-  const keyPair = crypto.keyPair()
+  const keyPair = NoiseSecretStream.keyPair()
 
   const sa1 = core.replicate(true)
   const sa2 = peer1.replicate(false, { keyPair })

@@ -27,6 +27,7 @@ const { manifestHash, createManifest } = require('./lib/verifier')
 const { ReadStream, WriteStream, ByteStream } = require('./lib/streams')
 const { MerkleTree } = require('./lib/merkle-tree')
 const { proof, verify } = require('./lib/fully-remote-proof')
+const cryptoSpec = require('./lib/crypto-spec')
 const {
   ASSERTION,
   BAD_ARGUMENT,
@@ -1389,7 +1390,7 @@ function isFunction(fn) {
 function createDiscoveryKeyHandler(fn) {
   return ondiscoverykey
   function ondiscoverykey(id) {
-    if (!id || id.byteLength !== 32) throw BAD_ARGUMENT('Invalid discovery key')
+    if (!id || id.byteLength !== cryptoSpec.HASH_BYTES) throw BAD_ARGUMENT('Invalid discovery key')
     return fn(id)
   }
 }

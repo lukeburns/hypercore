@@ -103,7 +103,7 @@ Signers are an array of objects with the following structure:
 
 ```
 {
-  signature: 'ed25519',               // The signature method
+  signature: 'mldsa44',                 // The signature method (ML-DSA-44)
   namespace: caps.DEFAULT_NAMESPACE,  // A cryptographic namespace for the signature
   publicKey: Buffer                   // Signer's public key
 }
